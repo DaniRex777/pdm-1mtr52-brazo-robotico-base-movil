@@ -1,0 +1,7 @@
+# Dependencias del servidor central (Python 3.11+)
+# Instalar con: pip install -r requirements.txt
+fastapi==0.115.6          # framework web (rutas HTTP + WebSocket)
+uvicorn[standard]==0.34.0 # servidor ASGI que ejecuta la app
+paho-mqtt==1.6.1          # cliente MQTT (v1.x: la API de callbacks usada)
+asyncpg==0.30.0           # driver async de PostgreSQL
+xArm-Python-SDK==1.14.7   # SDK oficial de UFactory para el xArm5
