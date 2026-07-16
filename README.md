@@ -23,6 +23,11 @@ sistema-teleoperacion-evaporador-iot/
 │   │   ├── db.py               # módulo de persistencia (PostgreSQL)
 │   │   ├── config.py           # constantes: IPs, puertos, tópicos, umbrales
 │   │   └── static/index.html   # interfaz web (dashboard)
+│   ├── base/                   # SOFTWARE DE LA BASE MÓVIL (Raspberry Pi)
+│   │   ├── run_robot.py        # ★ archivo principal de la Pi (lanza los 2 servicios)
+│   │   ├── movimiento_base.py  # motores BTS7960, cinemática, baliza y seguridad
+│   │   ├── stream.py           # servidor de cámaras USB (MJPEG)
+│   │   └── requirements_base.txt
 │   └── firmware/               # FIRMWARE de los microcontroladores (Arduino IDE)
 │       ├── nodo_sensor_mqtt/       # ESP32-S3: 4x DS18B20 + flujo YF-B1 → MQTT
 │       ├── sensor_distancia_tof/   # ESP32-WROVER: VL53L0X 20 Hz filtrado → HTTP
@@ -40,7 +45,7 @@ sistema-teleoperacion-evaporador-iot/
 |---|---|---|
 | PC (Windows) | Servidor central, broker MQTT, PostgreSQL, interfaz web | `src/servidor/` |
 | Brazo UFactory xArm5 | Manipulador de 5 GDL (IP 192.168.1.228) | `arm_controller.py` |
-| Raspberry Pi (base móvil) | Recibe comandos de la base y expone ultrasonidos y cámara | endpoints `/base`, `/teleop`, `/ultrasonido` |
+| Raspberry Pi 4 (base móvil) | Motores BTS7960 (PWM), baliza, ultrasonidos y 3 cámaras USB | `src/base/` (`run_robot.py`) |
 | ESP32-S3 | Nodo sensor: 4x DS18B20 (OneWire, GPIO4) + flujo YF-B1 (GPIO5) | `nodo_sensor_mqtt.ino` |
 | ESP32-WROVER-IE | Sensor de distancia TOF VL53L0X (I2C: SDA 21, SCL 22) | `sensor_distancia_tof.ino` |
 | ESP32-CAM (AI-Thinker) | Cámara del gripper + servo (GPIO13) | `camara_gripper.ino` |
@@ -69,7 +74,20 @@ Servicios externos en el PC:
   Si PostgreSQL o Mosquitto no están disponibles, el servidor arranca igual
   y desactiva ese subsistema (modo degradado).
 
-### 2. Firmware (Arduino IDE 2.x)
+### 2. Base móvil (Raspberry Pi)
+
+```bash
+# En la Raspberry Pi (Raspberry Pi OS):
+cd src/base
+pip3 install -r requirements_base.txt
+python3 run_robot.py     # lanza movimiento (5005) y cámaras (5000)
+```
+
+Pines BCM usados (ver cabecera de `movimiento_base.py`): motor izquierdo
+RPWM=12/LPWM=13/EN=23,24; motor derecho RPWM=18/LPWM=19/EN=25,26;
+baliza GPIO16; Arduino Nano de ultrasonidos por USB (`/dev/ttyUSB0`, 115200).
+
+### 3. Firmware (Arduino IDE 2.x)
 
 1. Instalar el soporte de placas **esp32 by Espressif Systems** (Boards Manager).
 2. Instalar librerías (Library Manager), versiones usadas:

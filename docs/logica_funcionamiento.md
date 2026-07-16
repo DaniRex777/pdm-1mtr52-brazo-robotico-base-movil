@@ -37,7 +37,34 @@ AL RECIBIR mensaje WebSocket (handle_message)
   base/teleop      → POST a la Raspberry de la base
 ```
 
-## 2. Nodo sensor (`src/firmware/nodo_sensor_mqtt/`)
+## 2. Base móvil (`src/base/`, Raspberry Pi)
+
+```
+run_robot.py (ARCHIVO PRINCIPAL de la Pi)
+  lanzar movimiento_base.py (puerto 5005) y stream.py (puerto 5000)
+  SI alguno se cae → apagar ambos (supervisión)
+
+movimiento_base.py
+  AL RECIBIR POST /teleop {active} → armar/desarmar
+      armar   → baliza con luz fija
+      desarmar→ detener motores y apagar baliza
+  AL RECIBIR POST /base {cmd}
+      SI no está armada y cmd != stop → rechazar (409)
+      SI cmd es fwd/bwd y el ultrasonido de esa cara ve obstáculo
+          bajo el umbral STOP → rechazar y frenar
+      SINO → cinemática inversa: phi = (v ± B·w)/R
+             → PWM a los BTS7960 (saturado a ±100 %)
+             → baliza parpadeando + zumbador mientras se mueve
+  HILO ultrasonidos: lee tramas <a,b,c,d> del Nano por USB
+      y las expone en GET /ultrasonido (con umbrales stop/warn)
+
+stream.py
+  un hilo de captura por cámara USB (frontal, izquierda, derecha)
+  cada hilo guarda su último frame JPEG (320x240 @ 15 fps)
+  GET /video/<id> → stream MJPEG | GET /status → estado de cámaras
+```
+
+## 3. Nodo sensor (`src/firmware/nodo_sensor_mqtt/`)
 
 ```
 SETUP
@@ -52,7 +79,7 @@ LOOP
                lab/evaporador/flujo        {"value"}
 ```
 
-## 3. Sensor de distancia TOF (`src/firmware/sensor_distancia_tof/`)
+## 4. Sensor de distancia TOF (`src/firmware/sensor_distancia_tof/`)
 
 ```
 LOOP (cada 50 ms ≈ 20 Hz)
@@ -60,7 +87,7 @@ LOOP (cada 50 ms ≈ 20 Hz)
   → media móvil (5) → publicar en HTTP /distance (crudo en /raw)
 ```
 
-## 4. Ultrasonidos anticolisión (`src/firmware/sensores_ultrasonido/`)
+## 5. Ultrasonidos anticolisión (`src/firmware/sensores_ultrasonido/`)
 
 ```
 LOOP
@@ -70,7 +97,7 @@ LOOP
   (la Raspberry la lee y la expone en /ultrasonido para el servidor)
 ```
 
-## 5. Cámara + gripper (`src/firmware/camara_gripper/`)
+## 6. Cámara + gripper (`src/firmware/camara_gripper/`)
 
 ```
 Basado en CameraWebServer (Espressif) +:

@@ -1,0 +1,6 @@
+# Dependencias de la BASE MÓVIL (Raspberry Pi OS, Python 3.9+)
+# Instalar con: pip3 install -r requirements_base.txt
+flask==3.0.3            # servidores HTTP de movimiento (5005) y cámaras (5000)
+RPi.GPIO==0.7.1         # control de pines (PWM de los BTS7960, baliza)
+pyserial==3.5           # lectura del Arduino Nano (ultrasonidos) por USB
+opencv-python==4.10.0.84  # captura y compresión JPEG de las cámaras USB
